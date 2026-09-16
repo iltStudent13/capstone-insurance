@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
@@ -13,7 +14,7 @@ export default function Login() {
     e.preventDefault();
     try {
       await login(email, password);
-      navigate("/");
+      navigate("/dashboard");
     } catch (err) {
       setError("Login failed. Please check your credentials.");
     }
@@ -36,6 +37,11 @@ export default function Login() {
         />
         <button type="submit">Login</button>
       </form>
+
+      <p className="auth-link">
+        Need an account? <Link to="/register">Register here</Link>
+      </p>
+
       {error && <p className="error">{error}</p>}
     </div>
   );

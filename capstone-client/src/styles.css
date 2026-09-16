@@ -1,0 +1,552 @@
+:root {
+  --gutter: 24px;
+  --max: 1200px;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  background: linear-gradient(180deg, #f3f7fb 0%, #edf2f7 100%);
+  color: #1f2937;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.site-header {
+  background: linear-gradient(90deg, #020f1a 0%, #12324d 100%);
+  color: #f8fbff;
+  box-shadow: 0 3px 16px rgba(2, 15, 26, 0.35);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.24);
+  padding: 0;
+}
+
+.navbar {
+  width: min(calc(100% - (var(--gutter) * 2)), var(--max));
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 72px;
+}
+
+.navbar-brand {
+  color: #ffffff;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex: 1;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.nav-links a {
+  color: #ffffff;
+  text-decoration: none;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  padding: 0.55rem 0.8rem;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.nav-links a:hover,
+.nav-links a.active {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.navbar-user {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-left: auto;
+  color: #eaf3ff;
+  font-weight: 700;
+}
+
+.username,
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+}
+
+.role-badge {
+  background: rgba(255, 255, 255, 0.1);
+  text-transform: capitalize;
+}
+.registration {
+  max-width: 400px;
+  margin: 8rem auto;
+  background: #fff;
+  padding: 2rem;
+  border-radius: 8px;
+}
+/* registration form and button styling */
+.registration input,
+.registration select,
+.registration textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.7rem;
+  margin-bottom: 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+}
+.registration button {
+  width: 100%;
+  padding: 0.7rem;
+  border: none;
+  border-radius: 6px;
+  background: #173b57;
+  color: white;
+  cursor: pointer;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+.registration button:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.navbar-user button {
+  margin-left: 0.25rem;
+}
+button {
+  padding: 0.6rem 1rem;
+  border: none;
+  border-radius: 6px;
+  background: #173b57;
+  color: white;
+  cursor: pointer;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+button:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+button + button,
+button + textarea,
+button + select,
+textarea + button,
+select + button,
+label + button {
+  margin-left: 0.75rem;
+}
+main {
+  width: min(calc(100% - (var(--gutter) * 2)), var(--max));
+  padding: 2.5rem 0 4rem;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+}
+
+.dashboard-layout,
+.dashboard-left,
+.dashboard-right,
+.bar-chart,
+.claim-detail-table,
+.login {
+  margin-top: 1.25rem;
+}
+
+.cards article {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  padding: 1.2rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+  border: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+.cards b {
+  display: block;
+  font-size: 2rem;
+  line-height: 1.2;
+  color: #0f172a;
+}
+
+.cards span {
+  color: #475569;
+  font-size: 0.95rem;
+}
+
+.cards .currency-value {
+  display: block;
+  font-size: 2rem;
+  line-height: 1.2;
+  color: inherit;
+}
+.dashboard-layout {
+  display: grid;
+  grid-template-columns: 1.1fr 1.9fr;
+  gap: 1.5rem;
+  align-items: stretch;
+  margin-top: 1.5rem;
+}
+
+.dashboard-left,
+.dashboard-right {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-right table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+  margin-top: 1rem;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 3px 12px rgba(15, 23, 42, 0.06);
+}
+
+.dashboard-right th,
+.dashboard-right td {
+  padding: 0.8rem;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+}
+
+.dashboard-right th {
+  background: #f8fafc;
+  color: #334155;
+}
+
+.login {
+  max-width: 400px;
+  margin: 8rem auto;
+  background: #fff;
+  padding: 2rem;
+  border-radius: 8px;
+}
+.login input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.7rem;
+  margin: 0.4rem 0;
+}
+/* bar chart styling for claims by status */
+.bar-chart {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  padding: 1rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+  border: 1px solid #e5e7eb;
+  margin-top: 1rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.bar-chart .bar-row {
+  display: flex;
+  align-items: center;
+  margin: 0.5rem 0;
+}
+.bar-chart .bar-label {
+  width: 100px;
+  margin-right: 1rem;
+}
+.bar-chart .bar-track {
+  flex: 1;
+  height: 1.5rem;
+  background: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-right: 1rem;
+}
+.bar-chart .bar-fill {
+  height: 100%;
+  background: #173b57;
+}
+.bar-chart .count {
+  width: 50px;
+  text-align: right;
+}
+.claim-detail-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+.claim-detail-table th,
+.claim-detail-table td {
+  padding: 0.8rem;
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+}
+.claim-detail-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  margin-top: 1rem;
+}
+
+.claim-detail-table th,
+.claim-detail-table td {
+  padding: 0.85rem;
+  border: 1px solid #e5e7eb;
+  text-align: left;
+  vertical-align: top;
+}
+
+.claim-detail-table select {
+  width: 100%;
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+}
+
+.claim-action-header,
+.claim-action-cell {
+  text-align: right;
+  width: 170px;
+}
+
+.claim-table-action-box {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+.claim-detail-actions,
+.claim-detail-note,
+.claim-detail-delete {
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: nowrap;
+}
+
+.claim-detail-note {
+  align-items: flex-start;
+}
+
+.claim-detail-note textarea {
+  min-width: 260px;
+  min-height: 90px;
+  padding: 0.75rem;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+}
+
+.claim-detail-note > * {
+  display: flex;
+  align-items: center;
+}
+
+.claim-detail-note label {
+  flex: 1;
+}
+
+.claim-detail-delete {
+  justify-content: flex-start;
+}
+
+.claim-detail-note label,
+.claim-detail-actions label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.policies-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+  margin-top: 1rem;
+  box-shadow: 0 3px 12px rgba(15, 23, 42, 0.06);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.policies-table th,
+.policies-table td {
+  padding: 0.8rem;
+  border: 1px solid #e5e7eb;
+  text-align: left;
+}
+.policies-table th {
+  background: #f8fafc;
+  color: #334155;
+}
+
+.policies-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.policies-filter-group {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.policy-filter-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.policy-filter-input,
+.policy-filter-select,
+.policy-form-field input,
+.policy-form-field select {
+  padding: 0.55rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font: inherit;
+}
+
+.policy-filter-input,
+.policy-filter-select {
+  margin-left: 0.5rem;
+}
+
+.policy-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.policy-modal {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 680px;
+  padding: 1.5rem;
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.2);
+  border: 1px solid #e2e8f0;
+}
+
+.policy-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.policy-modal-header h2 {
+  margin: 0;
+}
+
+.policy-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.policy-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.policy-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.policy-form-field span {
+  font-weight: 600;
+}
+
+.policy-form-field input,
+.policy-form-field select,
+.policy-form-field textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font: inherit;
+}
+
+.policy-form-field textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.policy-form-field-full {
+  grid-column: 1 / -1;
+}
+
+.policy-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.navbar-left {
+  display: flex;
+  gap: 1rem;
+}
+.navbar-right {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.error {
+  color: #b91c1c;
+}
+
+a {
+  color: #173b57;
+}
+
+a:hover {
+  color: #0f2f46;
+}
+@media (max-width: 800px) {
+  .cards {
+    grid-template-columns: 1fr 1fr;
+  }
+  nav span {
+    margin-left: 0;
+  }
+}

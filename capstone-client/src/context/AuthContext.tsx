@@ -12,6 +12,14 @@ type C = {
   user: User | null;
   token: string | null;
   loading: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  register: (payload: {
+    name: string;
+    email: string;
+    password: string;
+    role: string;
+  }) => Promise<void>;
+  logout: () => void;
 };
 
 const AuthContext = createContext<C | null>(null);
@@ -47,6 +55,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .finally(() => setLoading(false));
   }, []);
 
+  async function login(email: string, password: string) {
+    const r = await api.post("/auth/login", { email, password });
+    localStorage.setItem("token", r.data.token);
+    localStorage.setItem("user", JSON.stringify(r.data.user));
+    setToken(r.data.token);
+    setUser(r.data.user);
+  }
+
   async function register(payload: {
     name: string;
     email: string;
@@ -68,7 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading }}>
+    <AuthContext.Provider value={{ user, token, loading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
