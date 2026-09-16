@@ -1,5 +1,3 @@
-// Create auth routes /api/auth/register /api/auth/login /api/auth/me. Use the User model for registration and login. Return a JWT token on successful login. Verifies the token using jsonwebtoken attaches the user document to the request object for the /api/auth/me route. Use the authenticate middleware to protect the /api/auth/me route. Use the requireRole middleware to protect routes based on user roles.
-
 import express from "express";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";

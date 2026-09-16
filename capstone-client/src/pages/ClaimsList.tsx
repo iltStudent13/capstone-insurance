@@ -2,16 +2,22 @@ import { useEffect, useState } from "react";
 import api from "../services/api";
 import Currency from "../components/Currency";
 import { Link } from "react-router-dom";
+import { type Claim, type Policy } from "../types";
+import type { AxiosError } from "axios";
+
+type ApiErrorResponse = {
+  errors?: { msg: string }[];
+  error?: string;
+};
 
 export default function ClaimsList() {
-  const [claims, setClaims] = useState<any[]>([]);
+  const [claims, setClaims] = useState<Claim[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [totalPages, setTotalPages] = useState<number>(1);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [submitting, setSubmitting] = useState<boolean>(false);
-  const [policies, setPolicies] = useState<any[]>([]);
+  const [policies, setPolicies] = useState<Policy[]>([]);
   const [newClaim, setNewClaim] = useState({
     policy: "",
     description: "",
@@ -21,6 +27,26 @@ export default function ClaimsList() {
   });
 
   useEffect(() => {
+    const fetchClaims = async () => {
+      try {
+        const response = await api.get("/claims", {
+          params: {
+            status: statusFilter === "all" ? "" : statusFilter,
+            search: searchTerm,
+            page: currentPage,
+          },
+        });
+
+        const payload = Array.isArray(response.data)
+          ? response.data
+          : (response.data.claims ?? []);
+
+        setClaims(payload);
+      } catch (error) {
+        console.error("Failed to fetch claims:", error);
+      }
+    };
+
     fetchClaims();
   }, [statusFilter, searchTerm, currentPage]);
 
@@ -39,27 +65,6 @@ export default function ClaimsList() {
     loadPolicies();
   }, [isModalOpen]);
 
-  const fetchClaims = async () => {
-    try {
-      const response = await api.get("/claims", {
-        params: {
-          status: statusFilter === "all" ? "" : statusFilter,
-          search: searchTerm,
-          page: currentPage,
-        },
-      });
-
-      const payload = Array.isArray(response.data)
-        ? response.data
-        : (response.data.claims ?? []);
-
-      setClaims(payload);
-      setTotalPages(response.data.totalPages ?? 1);
-    } catch (error) {
-      console.error("Failed to fetch claims:", error);
-    }
-  };
-
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
     setCurrentPage(1);
@@ -71,7 +76,9 @@ export default function ClaimsList() {
   };
 
   const handleNewClaimChange = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+    event: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >,
   ) => {
     const { name, value } = event.target;
     setNewClaim((current) => ({ ...current, [name]: value }));
@@ -97,12 +104,14 @@ export default function ClaimsList() {
         status: "submitted",
       });
       setIsModalOpen(false);
-    } catch (error: any) {
+    } catch (error) {
+      const axiosError = error as AxiosError<ApiErrorResponse>;
       console.error("Failed to create claim:", error);
       const message =
-        error?.response?.data?.errors?.[0]?.msg ||
-        error?.response?.data?.error ||
-        "Unable to create claim right now.";
+        axiosError?.response?.status === 400
+          ? axiosError?.response?.data?.errors?.[0]?.msg
+          : axiosError?.response?.data?.error ||
+            "Unable to create claim right now.";
       alert(message);
     } finally {
       setSubmitting(false);
@@ -174,11 +183,8 @@ export default function ClaimsList() {
                     required
                   >
                     <option value="">Select a policy</option>
-                    {policies.map((policy: any) => (
-                      <option
-                        key={policy._id ?? policy.id}
-                        value={policy._id ?? policy.id}
-                      >
+                    {policies.map((policy: Policy) => (
+                      <option key={policy._id} value={policy._id}>
                         {policy.policyNumber}
                       </option>
                     ))}
@@ -265,18 +271,17 @@ export default function ClaimsList() {
               <td colSpan={6}>No claims found.</td>
             </tr>
           ) : (
-            claims.map((claim: any) => (
-              <tr key={claim._id ?? claim.id}>
+            claims.map((claim: Claim) => (
+              <tr key={claim._id}>
                 <td>
-                  <Link to={`/claims/${claim._id ?? claim.id}`}>
-                    {claim.claimNumber}
-                  </Link>
+                  <Link to={`/claims/${claim._id}`}>{claim.claimNumber}</Link>
                 </td>
                 <td>
-                  {claim.policyNumber ??
-                    (typeof claim.policy === "string"
-                      ? claim.policy
-                      : (claim.policy?.policyNumber ?? "N/A"))}
+                  {typeof claim.policyNumber === "string"
+                    ? claim.policyNumber
+                    : typeof claim.policyNumber === "string"
+                      ? claim.policyNumber
+                      : (claim.policyNumber?.policyNumber ?? "N/A")}
                 </td>
                 <td>{claim.description}</td>
                 <td>

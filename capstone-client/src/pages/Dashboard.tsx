@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
 import Currency from "../components/Currency";
-import { Link, useNavigate } from "react-router-dom";
-import ClaimsDetail from "./ClaimsDetail";
+import { Link } from "react-router-dom";
+import { type DashboardData, type RecentClaim } from "../types";
 
 export default function Dashboard() {
-  const [d, setD] = useState<any>(null);
+  const [d, setD] = useState<DashboardData | null>(null);
+
   useEffect(() => {
-    api.get("/dashboard").then((r) => setD(r.data));
+    api.get("/dashboard").then((r) => setD(r.data as DashboardData));
   }, []);
+
   if (!d) return <p>Loading dashboard...</p>;
   return (
     <>
@@ -74,7 +76,7 @@ export default function Dashboard() {
               </tr>
             </thead>
             <tbody>
-              {(d.recentClaims ?? []).map((claim: any) => (
+              {(d.recentClaims ?? []).map((claim: RecentClaim) => (
                 <tr key={claim._id ?? claim.id}>
                   <td>
                     <Link to={`/claims/${claim._id ?? claim.id}`}>
@@ -84,7 +86,7 @@ export default function Dashboard() {
                   <td>{claim.policyNumber}</td>
                   <td>{claim.status}</td>
                   <td>
-                    <Currency amount={claim.amount} />
+                    <Currency amount={claim.amount ?? 0} />
                   </td>
                 </tr>
               ))}

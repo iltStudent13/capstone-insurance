@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import api from "../services/api";
 import Currency from "../components/Currency";
+import { type Claim } from "../types";
+import { AxiosError } from "axios";
 
 const statusOptions = [
   { value: "submitted", label: "Submitted" },
@@ -13,7 +15,7 @@ const statusOptions = [
 
 const ClaimsDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const [claim, setClaim] = useState<any>(null);
+  const [claim, setClaim] = useState<Claim | null>(null);
   const [status, setStatus] = useState<string>("");
   const [note, setNote] = useState<string>("");
 
@@ -49,7 +51,11 @@ const ClaimsDetail: React.FC = () => {
             <tbody>
               <tr>
                 <td>{claim.claimNumber}</td>
-                <td>{claim.policyNumber}</td>
+                <td>
+                  {typeof claim.policyNumber === "string"
+                    ? claim.policyNumber
+                    : claim.policyNumber.policyNumber}
+                </td>
                 <td>
                   <Currency amount={claim.amount} />
                 </td>
@@ -73,12 +79,17 @@ const ClaimsDetail: React.FC = () => {
                         try {
                           await api.put(`/claims/${id}`, { status });
                           alert("Status updated successfully");
-                        } catch (error: any) {
+                        } catch (error) {
+                          const axiosError = error as AxiosError;
                           console.error("Error updating status:", error);
                           const message =
-                            error?.response?.status === 403
+                            axiosError?.response?.status === 403
                               ? "Only admins can update claim status."
-                              : error?.response?.data?.message ||
+                              : (
+                                  axiosError?.response?.data as {
+                                    message?: string;
+                                  }
+                                )?.message ||
                                 "Unable to update status right now.";
                           alert(message);
                         }
@@ -97,12 +108,17 @@ const ClaimsDetail: React.FC = () => {
                             await api.delete(`/claims/${id}`);
                             alert("Claim deleted successfully");
                             window.location.href = "/claims";
-                          } catch (error: any) {
+                          } catch (error) {
+                            const axiosError = error as AxiosError;
                             console.error("Error deleting claim:", error);
                             const message =
-                              error?.response?.status === 403
+                              axiosError?.response?.status === 403
                                 ? "Only admins can delete claims."
-                                : error?.response?.data?.message ||
+                                : (
+                                    axiosError?.response?.data as {
+                                      message?: string;
+                                    }
+                                  )?.message ||
                                   "Unable to delete claim right now.";
                             alert(message);
                           }
@@ -129,15 +145,22 @@ const ClaimsDetail: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {claim.notes.map((noteItem: any) => (
+                  {claim.notes.map((noteItem) => (
                     <tr
                       key={
                         noteItem._id ??
-                        `${noteItem.author}-${noteItem.createdAt}`
+                        `${String(noteItem.author ?? noteItem.createdBy)}-${noteItem.createdAt}`
                       }
                     >
-                      <td>{noteItem.author}</td>
-                      <td>{noteItem.text}</td>
+                      <td>
+                        {typeof noteItem.author === "string"
+                          ? noteItem.author
+                          : noteItem.author?.name ??
+                            (typeof noteItem.createdBy === "string"
+                              ? noteItem.createdBy
+                              : noteItem.createdBy?.name ?? "Unknown")}
+                      </td>
+                      <td>{noteItem.text ?? noteItem.content}</td>
                       <td>
                         {noteItem.createdAt
                           ? new Date(noteItem.createdAt).toLocaleString()
@@ -169,12 +192,13 @@ const ClaimsDetail: React.FC = () => {
                   const response = await api.get(`/claims/${id}`);
                   setClaim(response.data);
                 } catch (error) {
+                  const axiosError = error as AxiosError;
                   console.error("Error adding note:", error);
                   const message =
-                    error?.response?.status === 400
+                    axiosError?.response?.status === 400
                       ? "Minimum note length not met."
-                      : error?.response?.data?.message ||
-                        "Unable to add note right now.";
+                      : (axiosError?.response?.data as { message?: string })
+                          ?.message || "Unable to add note right now.";
                   alert(message);
                 }
               }}

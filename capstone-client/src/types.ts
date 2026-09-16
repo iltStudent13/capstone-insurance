@@ -19,22 +19,52 @@ export type Claim = {
   incidentDate: Date;
   status: string;
   amount: number;
-  policy: Policy | string;
+  policyNumber: Policy | string;
   assignedTo: User | string;
   notes: Array<{
     _id: string;
-    content: string;
+    author?: User | string;
+    createdBy?: User | string;
+    text?: string;
+    content?: string;
     createdAt: Date;
-    createdBy: User | string;
   }>;
 };
 
-export type DashboardStats = {
-  totalPolicies: number;
+export type DashboardData = {
   totalClaims: number;
+  totalPolicies: number;
   totalUsers: number;
-  claimsByStatus: Record<string, number>;
-  policiesByType: Record<string, number>;
-  recentClaims: Claim[];
   totalClaimAmount: number;
+  claimsByStatus: Record<string, number>;
+  recentClaims: Array<{
+    _id: string;
+    claimNumber?: string;
+    policyNumber?: string | null;
+    status?: string;
+    amount?: number;
+  }>;
+};
+
+export type RecentClaim = {
+  _id: string;
+  id?: string;
+  claimNumber?: string;
+  policyNumber?: string | null;
+  status?: string;
+  amount?: number;
+};
+
+export type AuthContextValue = {
+  user: User | null;
+  token: string | null;
+  loading: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  register: (payload: {
+    name: string;
+    email: string;
+    password: string;
+    role: string;
+  }) => Promise<void>;
+  logout: () => void;
 };

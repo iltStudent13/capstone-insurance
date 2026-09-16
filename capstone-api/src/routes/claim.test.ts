@@ -1,5 +1,3 @@
-// Use the seeded data to edit a claim status, create a new claim from an existing policy, and add a note to an existing claim. Verify that the changes are reflected in the database.
-
 import request from "supertest";
 import User from "../models/User.js";
 import Policy from "../models/Policy.js";

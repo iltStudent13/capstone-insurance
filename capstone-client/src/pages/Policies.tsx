@@ -1,16 +1,25 @@
 import api from "../services/api";
 import { useEffect, useState } from "react";
 import Currency from "../components/Currency";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../hooks/useAuth";
+import axios from "axios";
+import { type Policy } from "../types";
+
+type ApiErrorResponse = {
+  errors?: { msg: string }[];
+  error?: string;
+  message?: string;
+};
 
 export default function Policies() {
   const { user } = useAuth();
-  const [policies, setPolicies] = useState<any[]>([]);
+  const [policies, setPolicies] = useState<Policy[]>([]);
   const [loading, setLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
   const [formData, setFormData] = useState({
     holderName: "",
     type: "auto",
@@ -24,36 +33,42 @@ export default function Policies() {
       .split("T")[0],
   });
 
-  const fetchPolicies = async (
-    nextType = typeFilter,
-    nextSearch = searchTerm,
-  ) => {
-    try {
-      const params: Record<string, string> = {};
-      if (nextType && nextType !== "all") params.type = nextType;
-      if (nextSearch.trim()) params.search = nextSearch.trim();
-
-      const response = await api.get("/policies", { params });
-      setPolicies(response.data?.policies ?? []);
-    } catch (error) {
-      console.error("Failed to fetch policies:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchPolicies();
-  }, []);
+    let isActive = true;
+
+    const loadPolicies = async () => {
+      try {
+        const params: Record<string, string> = {};
+        if (typeFilter && typeFilter !== "all") params.type = typeFilter;
+        if (searchTerm.trim()) params.search = searchTerm.trim();
+
+        const response = await api.get("/policies", { params });
+
+        if (isActive) {
+          setPolicies(response.data?.policies ?? []);
+        }
+      } catch (error) {
+        console.error("Failed to fetch policies:", error);
+      } finally {
+        if (isActive) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void loadPolicies();
+
+    return () => {
+      isActive = false;
+    };
+  }, [searchTerm, typeFilter]);
 
   const handleTypeChange = (value: string) => {
     setTypeFilter(value);
-    fetchPolicies(value, searchTerm);
   };
 
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
-    fetchPolicies(typeFilter, value);
   };
 
   const handleFormChange = (
@@ -105,14 +120,23 @@ export default function Policies() {
           .toISOString()
           .split("T")[0],
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      let message = "Unable to create policy right now.";
+
       console.error("Failed to create policy:", error);
-      const message =
-        error?.response?.status === 403
-          ? "Only admins can create policies."
-          : error?.response?.data?.errors?.[0]?.msg ||
-            error?.response?.data?.error ||
-            "Unable to create policy right now.";
+      if (axios.isAxiosError(error)) {
+        const resp = error.response as
+          { status?: number; data?: ApiErrorResponse } | undefined;
+
+        message =
+          resp?.status === 403
+            ? "Only admins can create policies."
+            : resp?.data?.errors?.[0]?.msg ||
+              resp?.data?.error ||
+              resp?.data?.message ||
+              "Unable to create policy right now.";
+      }
+
       alert(message);
     } finally {
       setSubmitting(false);
@@ -126,6 +150,7 @@ export default function Policies() {
   return (
     <div>
       <h1>Policies</h1>
+
       <div className="policies-toolbar">
         <div className="policies-filter-group">
           <label className="policy-filter-label">
@@ -279,8 +304,8 @@ export default function Policies() {
           </tr>
         </thead>
         <tbody>
-          {policies.map((policy: any) => (
-            <tr key={policy._id ?? policy.id}>
+          {policies.map((policy: Policy) => (
+            <tr key={policy._id}>
               <td>{policy.policyNumber}</td>
               <td>{policy.holderName}</td>
               <td>{policy.type}</td>
@@ -302,19 +327,25 @@ export default function Policies() {
                 <button
                   onClick={async () => {
                     try {
-                      await api.delete(`/policies/${policy._id ?? policy.id}`);
+                      await api.delete(`/policies/${policy._id}`);
                       setPolicies((currentPolicies) =>
-                        currentPolicies.filter(
-                          (p) => (p._id ?? p.id) !== (policy._id ?? policy.id),
-                        ),
+                        currentPolicies.filter((p) => p._id !== policy._id),
                       );
-                    } catch (error: any) {
+                    } catch (error: unknown) {
                       console.error("Failed to delete policy:", error);
-                      const message =
-                        error?.response?.status === 403
+                      const message = axios.isAxiosError(error)
+                        ? error.response?.status === 403
                           ? "Only admins can delete policies."
-                          : error?.response?.data?.message ||
-                            "Unable to delete policy right now.";
+                          : (
+                              error.response?.data as
+                                ApiErrorResponse | undefined
+                            )?.message ||
+                            (
+                              error.response?.data as
+                                ApiErrorResponse | undefined
+                            )?.error ||
+                            "Unable to delete policy right now."
+                        : "Unable to delete policy right now.";
                       alert(message);
                     }
                   }}

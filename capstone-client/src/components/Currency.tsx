@@ -1,5 +1,3 @@
-import React from "react";
-
 type CurrencyProps = {
   amount: number;
   className?: string;

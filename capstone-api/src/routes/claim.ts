@@ -1,7 +1,6 @@
-// Claim routes /api/claims require authentication and authorization for users and admins. Users can create claims, view their own claims, and update their own claims. Admins can view all claims and update any claim.
 import express, { json } from "express";
-import Claim from "../models/Claim.js";
-import Policy from "../models/Policy.js";
+import type { Claim } from "../models/Claim.js";
+import type { Policy } from "../models/Policy.js";
 import authenticate from "../middleware/auth.js";
 import requireRole from "../middleware/authorize.js";
 import {
@@ -50,7 +49,9 @@ router.get(
         ];
 
         if (matchingPolicies.length > 0) {
-          query.$or.push({ policy: { $in: matchingPolicies.map((p) => p._id) } });
+          query.$or.push({
+            policy: { $in: matchingPolicies.map((p) => p._id) },
+          });
         }
       }
 
