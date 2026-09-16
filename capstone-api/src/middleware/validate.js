@@ -44,9 +44,9 @@ export const validateLogin = [
 
 export const PolicyValidationRules = [
   body("policyNumber")
-    .notEmpty()
-    .withMessage("Policy number is required")
+    .optional({ nullable: true, checkFalsy: true })
     .custom(async (value) => {
+      if (!value) return true;
       const policy = await Policy.findOne({ policyNumber: value });
       if (policy) {
         throw new Error("Policy number already exists");

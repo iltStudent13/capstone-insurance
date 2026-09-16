@@ -20,7 +20,10 @@ router.get("/", async (req, res, next) => {
       Policy.countDocuments(),
       Policy.aggregate([{ $group: { _id: "$type", count: { $sum: 1 } } }]),
       User.countDocuments(),
-      Claim.find().sort({ createdAt: -1 }).limit(5),
+      Claim.find()
+        .populate("policy", "policyNumber")
+        .sort({ createdAt: -1 })
+        .limit(5),
       Claim.aggregate([
         { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
       ]),
@@ -38,7 +41,10 @@ router.get("/", async (req, res, next) => {
         return acc;
       }, {}),
       totalUsers,
-      recentClaims,
+      recentClaims: recentClaims.map((claim: any) => ({
+        ...claim.toObject(),
+        policyNumber: claim.policy?.policyNumber ?? null,
+      })),
       totalClaimAmount:
         totalClaimAmount.length > 0 ? totalClaimAmount[0].totalAmount : 0,
     };

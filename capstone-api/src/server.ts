@@ -5,6 +5,7 @@ import authRouter from "./routes/auth.js";
 import claimRouter from "./routes/claim.js";
 import policyRouter from "./routes/policy.js";
 import dashboardRouter from "./routes/dashboard.js";
+import healthRouter from "./routes/health.js";
 import { connectDB } from "./config/db.js";
 import errorHandler from "./middleware/error.js";
 
@@ -16,6 +17,7 @@ app.use("/api/auth", authRouter);
 app.use("/api/claims", claimRouter);
 app.use("/api/policies", policyRouter);
 app.use("/api/dashboard", dashboardRouter);
+app.use("/api/health", healthRouter);
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 4000;

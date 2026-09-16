@@ -1,6 +1,7 @@
 // Claim routes /api/claims require authentication and authorization for users and admins. Users can create claims, view their own claims, and update their own claims. Admins can view all claims and update any claim.
 import express, { json } from "express";
 import Claim from "../models/Claim.js";
+import Policy from "../models/Policy.js";
 import authenticate from "../middleware/auth.js";
 import requireRole from "../middleware/authorize.js";
 import {
@@ -12,6 +13,16 @@ import {
 
 const router = express.Router();
 
+const serializeClaim = (claim: any) => {
+  const plainClaim = claim.toObject ? claim.toObject() : claim;
+
+  if (plainClaim.policy && typeof plainClaim.policy === "object") {
+    plainClaim.policyNumber = plainClaim.policy.policyNumber ?? null;
+  }
+
+  return plainClaim;
+};
+
 // GET /api/claims - Get all claims
 router.get(
   "/",
@@ -20,8 +31,42 @@ router.get(
   handleValidationErrors,
   async (req, res, next) => {
     try {
-      const claims = await Claim.find();
-      res.status(200).json(claims);
+      const { status, search, page = 1, limit = 10 } = req.query;
+      const query: Record<string, any> = {};
+
+      if (status && status !== "all") {
+        query.status = status;
+      }
+
+      if (search) {
+        const searchTerm = String(search).trim();
+        const matchingPolicies = await Policy.find({
+          policyNumber: { $regex: searchTerm, $options: "i" },
+        }).select("_id");
+
+        query.$or = [
+          { claimNumber: { $regex: searchTerm, $options: "i" } },
+          { description: { $regex: searchTerm, $options: "i" } },
+        ];
+
+        if (matchingPolicies.length > 0) {
+          query.$or.push({ policy: { $in: matchingPolicies.map((p) => p._id) } });
+        }
+      }
+
+      const skip = (Number(page) - 1) * Number(limit);
+      const total = await Claim.countDocuments(query);
+      const claims = await Claim.find(query)
+        .populate("policy", "policyNumber")
+        .skip(skip)
+        .limit(Number(limit))
+        .sort({ createdAt: -1 });
+
+      res.status(200).json({
+        claims: claims.map(serializeClaim),
+        totalPages: Math.max(1, Math.ceil(total / Number(limit))),
+        total,
+      });
     } catch (err) {
       next(err);
     }
@@ -29,36 +74,34 @@ router.get(
 );
 
 // GET /api/claims/stats count by status, total claim amount and total claims
-router.get(
-  "/stats",
-  authenticate,
-  requireRole("admin"),
-  async (req, res, next) => {
-    try {
-      const stats = await Claim.aggregate([
-        {
-          $group: {
-            _id: "$status",
-            count: { $sum: 1 },
-            totalAmount: { $sum: "$amount" },
-          },
+router.get("/stats", authenticate, async (req, res, next) => {
+  try {
+    const stats = await Claim.aggregate([
+      {
+        $group: {
+          _id: "$status",
+          count: { $sum: 1 },
+          totalAmount: { $sum: "$amount" },
         },
-      ]);
-      res.json(stats);
-    } catch (err) {
-      next(err);
-    }
-  },
-);
+      },
+    ]);
+    res.json(stats);
+  } catch (err) {
+    next(err);
+  }
+});
 
 // GET /api/claims/:id - Get a specific claim by ID
 router.get("/:id", authenticate, async (req, res, next) => {
   try {
-    const claim = await Claim.findById(req.params.id);
+    const claim = await Claim.findById(req.params.id).populate(
+      "policy",
+      "policyNumber",
+    );
     if (!claim) {
       return res.status(404).json({ error: "Claim not found" });
     }
-    res.status(200).json(claim);
+    res.status(200).json(serializeClaim(claim));
   } catch (err) {
     next(err);
   }
@@ -72,11 +115,12 @@ router.post(
   handleValidationErrors,
   async (req, res, next) => {
     try {
-      const { _id, policy, description, amount, incidentDate, notes } = req.body;
+      const { _id, policy, description, amount, incidentDate, notes } =
+        req.body;
       const assignedTo = req.user._id;
 
       const claimPayload = {
-        ...( _id ? { _id } : {}),
+        ...(_id ? { _id } : {}),
         policy,
         description,
         amount,
@@ -95,7 +139,8 @@ router.post(
 
       const claim = new Claim(claimPayload);
       await claim.save();
-      res.status(201).json(claim);
+      await claim.populate("policy", "policyNumber");
+      res.status(201).json(serializeClaim(claim));
     } catch (err) {
       next(err);
     }
@@ -118,14 +163,15 @@ router.put(
 
       Object.assign(claim, updateFields);
       await claim.save();
-      res.status(200).json(claim);
+      await claim.populate("policy", "policyNumber");
+      res.status(200).json(serializeClaim(claim));
     } catch (err) {
       next(err);
     }
   },
 );
 
-// POST /api/claims:id/notes - Add a note to a claim, only the admin can add notes
+// POST /api/claims:id/notes - Add a note to a claim
 router.post(
   "/:id/notes",
   authenticate,
