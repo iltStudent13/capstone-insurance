@@ -27,7 +27,7 @@ export default function Navbar() {
 
       {user && (
         <div className="navbar-user">
-          <span className="username">{user.username}</span>
+          <span className="username">{user.name}</span>
           <span className={`role-badge ${user.role}`}>{user.role}</span>
           <button onClick={logout}>Logout</button>
         </div>

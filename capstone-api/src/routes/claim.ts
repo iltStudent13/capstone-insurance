@@ -1,6 +1,10 @@
-import express, { json } from "express";
-import type { Claim } from "../models/Claim.js";
-import type { Policy } from "../models/Policy.js";
+import express, {
+  type NextFunction,
+  type Request,
+  type Response,
+} from "express";
+import Claim from "../models/Claim.js";
+import Policy from "../models/Policy.js";
 import authenticate from "../middleware/auth.js";
 import requireRole from "../middleware/authorize.js";
 import {
@@ -11,6 +15,23 @@ import {
 } from "../middleware/validate.js";
 
 const router = express.Router();
+
+type ClaimQuery = Record<string, unknown> & {
+  $or?: Array<Record<string, unknown>>;
+};
+
+type CreateClaimPayload = {
+  _id?: string;
+  policy: string;
+  description: string;
+  amount: number;
+  incidentDate: string;
+  assignedTo: Request["user"]["_id"];
+  notes?: Array<{
+    author: Request["user"]["_id"];
+    text: string;
+  }>;
+};
 
 const serializeClaim = (claim: any) => {
   const plainClaim = claim.toObject ? claim.toObject() : claim;
@@ -28,10 +49,10 @@ router.get(
   authenticate,
   ListClaimsValidationRules,
   handleValidationErrors,
-  async (req, res, next) => {
+  async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { status, search, page = 1, limit = 10 } = req.query;
-      const query: Record<string, any> = {};
+      const query: ClaimQuery = {};
 
       if (status && status !== "all") {
         query.status = status;
@@ -75,38 +96,46 @@ router.get(
 );
 
 // GET /api/claims/stats count by status, total claim amount and total claims
-router.get("/stats", authenticate, async (req, res, next) => {
-  try {
-    const stats = await Claim.aggregate([
-      {
-        $group: {
-          _id: "$status",
-          count: { $sum: 1 },
-          totalAmount: { $sum: "$amount" },
+router.get(
+  "/stats",
+  authenticate,
+  async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+      const stats = await Claim.aggregate([
+        {
+          $group: {
+            _id: "$status",
+            count: { $sum: 1 },
+            totalAmount: { $sum: "$amount" },
+          },
         },
-      },
-    ]);
-    res.json(stats);
-  } catch (err) {
-    next(err);
-  }
-});
+      ]);
+      res.json(stats);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 
 // GET /api/claims/:id - Get a specific claim by ID
-router.get("/:id", authenticate, async (req, res, next) => {
-  try {
-    const claim = await Claim.findById(req.params.id).populate(
-      "policy",
-      "policyNumber",
-    );
-    if (!claim) {
-      return res.status(404).json({ error: "Claim not found" });
+router.get(
+  "/:id",
+  authenticate,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const claim = await Claim.findById(req.params.id).populate(
+        "policy",
+        "policyNumber",
+      );
+      if (!claim) {
+        return res.status(404).json({ error: "Claim not found" });
+      }
+      res.status(200).json(serializeClaim(claim));
+    } catch (err) {
+      next(err);
     }
-    res.status(200).json(serializeClaim(claim));
-  } catch (err) {
-    next(err);
-  }
-});
+  },
+);
 
 // POST /api/claims - Create a new claim, auto assign to the authenticated user
 router.post(
@@ -114,13 +143,13 @@ router.post(
   authenticate,
   CreateClaimValidationRules,
   handleValidationErrors,
-  async (req, res, next) => {
+  async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { _id, policy, description, amount, incidentDate, notes } =
         req.body;
       const assignedTo = req.user._id;
 
-      const claimPayload = {
+      const claimPayload: CreateClaimPayload = {
         ...(_id ? { _id } : {}),
         policy,
         description,
@@ -153,7 +182,7 @@ router.put(
   "/:id",
   authenticate,
   requireRole("admin"),
-  async (req, res, next) => {
+  async (req: Request, res: Response, next: NextFunction) => {
     try {
       const claim = await Claim.findById(req.params.id);
       if (!claim) {
@@ -178,7 +207,7 @@ router.post(
   authenticate,
   ValidateNote,
   handleValidationErrors,
-  async (req, res, next) => {
+  async (req: Request, res: Response, next: NextFunction) => {
     try {
       const claim = await Claim.findById(req.params.id);
       if (!claim) {
@@ -204,7 +233,7 @@ router.delete(
   "/:id",
   authenticate,
   requireRole("admin"),
-  async (req, res, next) => {
+  async (req: Request, res: Response, next: NextFunction) => {
     try {
       const claim = await Claim.findByIdAndDelete(req.params.id);
       if (!claim) {
