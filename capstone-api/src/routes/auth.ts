@@ -1,5 +1,5 @@
-import express from "express";
-import jwt from "jsonwebtoken";
+import express, { type Request, type Response } from "express";
+import jwt, { type SignOptions } from "jsonwebtoken";
 import User from "../models/User.js";
 import authenticate from "../middleware/auth.js";
 import {
@@ -10,19 +10,47 @@ import {
 
 const router = express.Router();
 
+type LoginUser = {
+  _id: string;
+  name: string;
+  email: string;
+  role: "adjuster" | "admin";
+  comparePassword: (candidatePassword: string) => Promise<boolean>;
+};
+
+const getJwtSecret = () => {
+  const jwtSecret = process.env.JWT_SECRET;
+
+  if (!jwtSecret) {
+    throw new Error("JWT_SECRET is not configured");
+  }
+
+  return jwtSecret;
+};
+
+const getJwtOptions = (): SignOptions | undefined => {
+  const expiresIn = process.env.JWT_EXPIRES_IN as
+    | SignOptions["expiresIn"]
+    | undefined;
+
+  return expiresIn ? { expiresIn } : undefined;
+};
+
 // Register a new user
 router.post(
   "/register",
   validateRegistration,
   handleValidationErrors,
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { name, email, password, role } = req.body;
       const user = new User({ name, email, password, role });
       await user.save();
-      const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-        expiresIn: process.env.JWT_EXPIRES_IN,
-      });
+      const token = jwt.sign(
+        { userId: user._id },
+        getJwtSecret(),
+        getJwtOptions(),
+      );
       res.status(201).json({
         token,
         user: {
@@ -32,8 +60,10 @@ router.post(
           role: user.role,
         },
       });
-    } catch (err) {
-      res.status(400).json({ error: err.message });
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Registration failed";
+      res.status(400).json({ error: message });
     }
   },
 );
@@ -43,13 +73,13 @@ router.post(
   "/login",
   validateLogin,
   handleValidationErrors,
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { email, password } = req.body;
 
-      const user = await User.findOne({ email: `${email}` }).select(
+      const user = (await User.findOne({ email: `${email}` }).select(
         "+password",
-      );
+      )) as LoginUser | null;
       if (!user) {
         return res.status(401).json({ error: "Invalid email or password" });
       }
@@ -59,9 +89,11 @@ router.post(
         return res.status(401).json({ error: "Invalid email or password" });
       }
 
-      const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-        expiresIn: process.env.JWT_EXPIRES_IN,
-      });
+      const token = jwt.sign(
+        { userId: user._id },
+        getJwtSecret(),
+        getJwtOptions(),
+      );
 
       res.json({
         token,
@@ -72,13 +104,14 @@ router.post(
           role: user.role,
         },
       });
-    } catch (err) {
-      res.status(500).json({ error: err.message });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Login failed";
+      res.status(500).json({ error: message });
     }
   },
 );
 
-router.get("/me", authenticate, (req, res) => {
+router.get("/me", authenticate, (req: Request, res: Response) => {
   res.json({
     user: {
       id: req.user._id,

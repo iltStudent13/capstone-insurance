@@ -121,11 +121,16 @@ async function seedPoliciesAndClaims() {
       const savedPolicy = await policy.save();
       savedPolicies.push(savedPolicy);
     }
+
+    if (savedPolicies.length < 4) {
+      throw new Error("Expected at least 4 policies to be seeded");
+    }
+
     console.log("Policies seeded successfully");
 
     const claims = [
       {
-        policy: savedPolicies[0]._id,
+        policy: savedPolicies[0]!._id,
         description: "Life insurance payout request",
         assignedTo: adminUser._id,
         amount: 5000,
@@ -140,7 +145,7 @@ async function seedPoliciesAndClaims() {
         ],
       },
       {
-        policy: savedPolicies[1]._id,
+        policy: savedPolicies[1]!._id,
         description: "Auto damage claim",
         assignedTo: regularUser._id,
         amount: 2000,
@@ -149,7 +154,7 @@ async function seedPoliciesAndClaims() {
         notes: [],
       },
       {
-        policy: savedPolicies[2]._id,
+        policy: savedPolicies[2]!._id,
         description: "Denial review for life policy",
         assignedTo: secondUser._id,
         amount: 2000,
@@ -164,7 +169,7 @@ async function seedPoliciesAndClaims() {
         ],
       },
       {
-        policy: savedPolicies[2]._id,
+        policy: savedPolicies[2]!._id,
         description: "Updated life claim submission",
         assignedTo: regularUser._id,
         amount: 2000,
@@ -179,7 +184,7 @@ async function seedPoliciesAndClaims() {
         ],
       },
       {
-        policy: savedPolicies[3]._id,
+        policy: savedPolicies[3]!._id,
         description: "Home policy claim",
         assignedTo: adminUser._id,
         amount: 2000,

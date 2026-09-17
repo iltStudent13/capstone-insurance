@@ -1,5 +1,5 @@
 // Create Registration page with a form that allows users to register with name, email, password, and role. Use the AuthContext to call the register function on form submission. Redirect to the login page on successful registration.
-import { useState } from "react";
+import React, { useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 
@@ -12,7 +12,7 @@ export default function Registration() {
   const { register } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
       await register({ name, email, password, role });
