@@ -16,7 +16,7 @@ describe("Claim routes", () => {
   beforeAll(async () => {
     if (mongoose.connection.readyState === 0) {
       await connectDB(
-        process.env.MONGODB_URI || "mongodb://localhost:27017/capstone",
+        process.env.MONGODB_URI || "mongodb://localhost:27017/policy-claims",
       );
     }
 

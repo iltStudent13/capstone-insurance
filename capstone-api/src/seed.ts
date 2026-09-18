@@ -10,7 +10,7 @@ dotenv.config();
 async function seedUsers() {
   try {
     await connectDB(
-      process.env.MONGODB_URI || "mongodb://localhost:27017/capstone",
+      process.env.MONGODB_URI || "mongodb://localhost:27017/policy-claims",
     );
 
     await User.deleteMany({});
@@ -53,7 +53,7 @@ async function seedUsers() {
 async function seedPoliciesAndClaims() {
   try {
     await connectDB(
-      process.env.MONGODB_URI || "mongodb://localhost:27017/capstone",
+      process.env.MONGODB_URI || "mongodb://localhost:27017/policy-claims",
     );
 
     // clear existing policies and claims first
