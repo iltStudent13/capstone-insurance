@@ -1,184 +1,274 @@
 # Capstone Insurance Project
 
-This project is a full-stack insurance application with a Node.js + Express API and a React + Vite client. It includes authentication, policy management, claim workflows, seeded demo data, and Vitest route tests.
+This project is a full-stack insurance application with a Node.js + Express API and a React + Vite client. It includes authentication, policy management, claims workflows, seeded demo data, and route-level tests.
 
 ## Prerequisites
 
-Before you start, make sure the following are installed on your machine:
+Before starting, make sure the following are installed:
 
-- Node.js 18 or newer
+- Node.js 18+
 - npm
-- MongoDB running locally or via Docker
+- Docker and Docker Compose
+- Kubernetes tooling if you want to run the K8s manifests locally (`kind`, `kubectl`)
 - Git
-- A terminal such as bash, zsh, or PowerShell
+- A terminal such as bash or zsh
 
-Optional but helpful:
+Optional but useful:
 
 - VS Code
 - MongoDB Compass
-- Postman or curl for API testing
+- Postman or curl
 
-## Project structure
+## Repository structure
 
-```mermaid
-flowchart TD
-    A[capstone-insurance] --> B[capstone-api]
-    A --> C[capstone-client]
-    A --> D[README.md]
-
-    B --> B1[src]
-    B --> B2[package.json]
-    B --> B3[.env]
-    B --> B4[tsconfig.json]
-
-    B1 --> B11[routes]
-    B1 --> B12[models]
-    B1 --> B13[middleware]
-    B1 --> B14[config]
-
-    C --> C1[src]
-    C --> C2[public]
-    C --> C3[package.json]
-    C --> C4[vite.config.ts]
-
-    B11 --> B111[auth.test.ts]
-    B11 --> B112[claim.test.ts]
-    B11 --> B113[policy.test.ts]
+```text
+capstone-insurance/
+├── README.md
+├── docker-compose.yaml
+├── docker-compose.prod.yaml
+├── generate-certs.sh
+├── certs/
+│   ├── server.crt
+│   └── server.key
+├── k8s/
+│   ├── api.yaml
+│   ├── client.yaml
+│   ├── kind-config.yaml
+│   ├── mongo-pvc.yaml
+│   ├── mongo.yaml
+│   ├── namespace.yaml
+│   └── secrets.yaml
+├── capstone-api/
+│   ├── Dockerfile
+│   ├── package.json
+│   ├── tsconfig.json
+│   ├── curlscripts.md
+│   └── src/
+│       ├── config/
+│       ├── middleware/
+│       ├── models/
+│       ├── queries.js
+│       ├── routes/
+│       ├── seed.ts
+│       ├── server.ts
+│       └── express.d.ts
+└── capstone-client/
+    ├── Dockerfile
+    ├── nginx.conf
+    ├── nginx-ssl.conf
+    ├── eslint.config.js
+    ├── index.html
+    ├── package.json
+    ├── tsconfig.json
+    ├── tsconfig.app.json
+    ├── tsconfig.node.json
+    ├── vite.config.ts
+    ├── public/
+    └── src/
+        ├── App.tsx
+        ├── main.tsx
+        ├── styles.css
+        ├── types.ts
+        ├── assets/
+        ├── components/
+        ├── context/
+        ├── hooks/
+        ├── pages/
+        └── services/
 ```
 
-## Step-by-step setup
+## Local development setup
 
-1. Open a terminal and go to the project folder:
-
-```bash
-cd /path/to/capstone-insurance
-```
-
-2. Install the API dependencies:
+### 1. Install dependencies
 
 ```bash
-cd capstone-api
+cd capstone-insurance/capstone-api
 npm install
-```
 
-3. Install the client dependencies:
-
-```bash
 cd ../capstone-client
 npm install
 ```
 
-4. Start MongoDB locally.
+### 2. Start MongoDB
 
-If MongoDB is installed locally, make sure the service is running:
+You can run MongoDB either locally or through Docker.
+
+Local install:
 
 ```bash
 mongod
 ```
 
-If you use Docker for MongoDB, you can start a container with something like:
+Docker-based option:
 
 ```bash
 docker run -d -p 27017:27017 --name capstone-mongo mongo:latest
 ```
 
-5. Confirm the API environment file is present and contains the correct local database URL:
+### 3. Configure the API environment
 
-```bash
-cd ../capstone-api
-cat .env
-```
-
-Expected values:
+The API expects a `.env` file or runtime environment variables. A typical local configuration is:
 
 ```env
 PORT=4000
 MONGODB_URI=mongodb://localhost:27017/policy-claims
+JWT_SECRET=dev-secret-change-me
 ```
 
 ## Seed the database
 
-The API includes a seed script to load sample users, policies, and claims.
-
-Run:
+The API includes a seed script that creates default users, policies, and claims for demo usage.
 
 ```bash
-cd capstone-api
+cd capstone-insurance/capstone-api
 npm run seed
 ```
 
-This creates default records so the app has usable demo data.
+## Run the app locally
 
-## Run the development servers
+Open two terminals.
 
-Open two terminal windows.
-
-### Terminal 1: Start the API
+### Terminal 1: API
 
 ```bash
 cd capstone-insurance/capstone-api
 npm run dev:tsx
 ```
 
-This starts the Express API with TypeScript hot reload. The server should run on:
+API endpoint:
 
 - http://localhost:4000
 
-You can check the health endpoint:
+Check health:
 
 ```bash
 curl http://localhost:4000/api/health
 ```
 
-### Terminal 2: Start the client
+### Terminal 2: Client
 
 ```bash
 cd capstone-insurance/capstone-client
 npm run dev
 ```
 
-This starts the Vite frontend. The app is usually available at:
+Client endpoint:
 
 - http://localhost:5173
 
-## How the test files work
+## Docker Compose
 
-The project includes route tests in files such as:
+The repo includes two Compose files:
+
+### docker-compose.yaml
+
+This is the standard local stack:
+
+- MongoDB container on port 27017
+- API container on port 4000
+- Client container on port 3000, served through Nginx
+
+```bash
+docker compose up --build
+```
+
+Access:
+
+- API: http://localhost:4000
+- Client: http://localhost:3000
+
+### docker-compose.prod.yaml
+
+This version is tailored for production-like deployment and includes HTTPS.
+
+It mounts the certificate files from `./certs` and uses the SSL Nginx config:
+
+- Client HTTPS: https://localhost:8443
+- Client HTTP redirect: http://localhost:8080
+- API: http://localhost:4000
+
+```bash
+docker compose -f docker-compose.prod.yaml up --build
+```
+
+Important notes:
+
+- The client container uses `capstone-client/nginx-ssl.conf` for HTTPS routing.
+- The API is configured with `NODE_ENV=production` and `JWT_SECRET` from environment variables.
+- The stack depends on the certificate files being present before startup.
+
+## Certificates
+
+The TLS assets are generated by `generate-certs.sh`:
+
+```bash
+./generate-certs.sh
+```
+
+This creates:
+
+- `certs/server.crt`
+- `certs/server.key`
+
+The certificate is a self-signed localhost certificate with SAN entries for:
+
+- `localhost`
+- `127.0.0.1`
+
+The production Docker Compose setup mounts these files into the nginx container, and the Nginx config in `capstone-client/nginx-ssl.conf` serves HTTPS with those certs.
+
+If your browser warns about the certificate, this is expected for a self-signed dev certificate. Accept the local exception to continue.
+
+## Kubernetes (K8s)
+
+The `k8s/` folder contains manifests for running the application in a local Kubernetes cluster using kind.
+
+### Included manifests
+
+- `k8s/namespace.yaml` — creates the `policy-claims` namespace
+- `k8s/secrets.yaml` — stores runtime secrets such as JWT and MongoDB connection details
+- `k8s/mongo-pvc.yaml` — persistent storage for MongoDB
+- `k8s/mongo.yaml` — MongoDB deployment and service
+- `k8s/api.yaml` — API deployment and service
+- `k8s/client.yaml` — frontend deployment and NodePort service
+- `k8s/kind-config.yaml` — kind cluster config with port mapping for the client
+
+### Local cluster example
+
+Create the cluster:
+
+```bash
+kind create cluster --config k8s/kind-config.yaml
+```
+
+Apply the namespace and workloads:
+
+```bash
+kubectl apply -f k8s/namespace.yaml
+kubectl apply -f k8s/secrets.yaml
+kubectl apply -f k8s/mongo-pvc.yaml
+kubectl apply -f k8s/mongo.yaml
+kubectl apply -f k8s/api.yaml
+kubectl apply -f k8s/client.yaml
+```
+
+The client service is exposed via NodePort on `30080`, so it can be reached using:
+
+```text
+http://localhost:30080
+```
+
+The API is internal to the cluster and is reached by the client via the service name `api` on port `4000`.
+
+## Tests
+
+The API includes Vitest route tests under:
 
 - `capstone-api/src/routes/auth.test.ts`
 - `capstone-api/src/routes/claim.test.ts`
 - `capstone-api/src/routes/policy.test.ts`
 
-These are Vitest test files. They use `describe`, `it`, and `expect` and send HTTP requests with `supertest` against an Express app.
-
-Example pattern:
-
-```ts
-import request from "supertest";
-import { describe, it, expect } from "vitest";
-
-describe("Auth routes", () => {
-  it("registers a user", async () => {
-    const response = await request(app).post("/api/auth/register").send({
-      name: "Jane Doe",
-      email: "jane@example.com",
-      password: "password123",
-    });
-
-    expect(response.status).toBe(201);
-  });
-});
-```
-
-Why they matter:
-
-- They check route behavior without needing the browser.
-- They validate status codes, returned JSON, validation errors, and auth behavior.
-- They help catch regressions when you change route logic.
-
-## Run the tests
-
-From the API folder:
+Run the full suite:
 
 ```bash
 cd capstone-insurance/capstone-api
@@ -192,18 +282,9 @@ cd capstone-insurance/capstone-api
 npx vitest run src/routes/auth.test.ts
 ```
 
-Run in watch mode while developing:
+## Default demo login
 
-```bash
-cd capstone-insurance/capstone-api
-npx vitest
-```
-
-Note: this project does not currently expose a working `npm test` script in the API package.json, so the Vitest CLI is the recommended command.
-
-## Common login credentials
-
-After seeding the database, you can log in with the default demo account:
+After seeding the database, you can log in with:
 
 ```text
 Email: admin@example.com
@@ -225,29 +306,56 @@ npm install
 cd ../capstone-api
 npm run seed
 
-# Start API
+# Start API locally
 npm run dev:tsx
 
-# Start client
+# Start client locally
 cd ../capstone-client
 npm run dev
 
 # Run API tests
 cd ../capstone-api
 npx vitest run
+
+# Start Docker Compose stack
+docker compose up --build
+
+# Start production-like Docker Compose stack
+docker compose -f docker-compose.prod.yaml up --build
+
+# Generate self-signed localhost certs
+./generate-certs.sh
 ```
 
 ## Troubleshooting
 
-### MongoDB connection error
+### MongoDB connection issues
 
-- Make sure MongoDB is running.
-- Check that the `.env` file uses the correct connection string.
-- Confirm Mongo is listening on port 27017.
+- Confirm MongoDB is running and reachable at the configured URI.
+- Verify the port is not in use by another service.
+- Check the API `.env` values for `MONGODB_URI` and `JWT_SECRET`.
 
-### API not starting
+### Docker Compose fails to start
 
-- Make sure dependencies are installed.
+- Make sure Docker is running.
+- Confirm the cert files exist in `certs/` before using the production Compose file.
+- Check container logs with:
+
+```bash
+docker compose logs
+```
+
+### Kubernetes deployment issues
+
+- Make sure your local cluster is running.
+- Confirm the `policy-claims` namespace exists.
+- Ensure the secret values are valid and the MongoDB service is healthy.
+
+### SSL certificate browser warning
+
+- This is expected with a self-signed certificate.
+- Accept the local certificate warning in the browser or use the generated cert in a trusted local certificate store for a cleaner workflow.
+
 - Confirm the `.env` file exists.
 - Check if port 4000 is already in use.
 
