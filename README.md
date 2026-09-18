@@ -93,7 +93,7 @@ Expected values:
 
 ```env
 PORT=4000
-MONGODB_URI=mongodb://localhost:27017/capstone
+MONGODB_URI=mongodb://localhost:27017/policy-claims
 ```
 
 ## Seed the database
