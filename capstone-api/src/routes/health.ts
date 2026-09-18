@@ -3,7 +3,7 @@ import authenticate from "../middleware/auth.js";
 
 const router = express.Router();
 
-router.get("/", authenticate, (req, res) => {
+router.get("/", (req, res) => {
   res.json({
     status: "ok",
   });
